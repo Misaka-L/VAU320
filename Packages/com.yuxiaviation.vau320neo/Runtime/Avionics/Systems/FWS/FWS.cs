@@ -170,13 +170,20 @@ namespace A320VAU.FWS
                 // Repeat when after 11s (>50ft) / 4s (<50ft)
                 var diff = Time.time - _lastCallout;
                 var lastCalloutLength = altitudeCallouts[_lastAltitudeCalloutIndex].length;
-                if (!saccAirVehicle.Taxiing && altitudeCalloutIndex != -1 && (
-                        (radioAltitude > 50f && diff > 11f + lastCalloutLength)
-                        ||
-                        (radioAltitude < 50f && diff > 4f + lastCalloutLength)
-                    ) && Mathf.Abs(radioAltitude - altitudeCalloutIndexs[altitudeCalloutIndex]) < 10)
+                if (!saccAirVehicle.Taxiing)
                 {
-                    gpws.PlayOneShot(altitudeCallouts[altitudeCalloutIndex]);
+                    if (altitudeCalloutIndex != -1 && (
+                            (radioAltitude > 50f && diff > 11f + lastCalloutLength)
+                            ||
+                            (radioAltitude < 50f && diff > 4f + lastCalloutLength)
+                        ) && Mathf.Abs(radioAltitude - altitudeCalloutIndexs[altitudeCalloutIndex]) < 10)
+                    {
+                        gpws.PlayOneShot(altitudeCallouts[altitudeCalloutIndex]);
+                        _lastCallout = Time.time;
+                    }
+                }
+                else
+                {
                     _lastCallout = Time.time;
                 }
             }
