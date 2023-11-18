@@ -62,6 +62,8 @@ namespace A320VAU.Common {
 
         public SystemEventBus systemEventBus;
 
+        public DFUNC_a320_ElevatorTrim elevatorTrim;
+
         [Header("World")]
         public NavaidDatabase navaidDatabase;
 
@@ -117,6 +119,8 @@ namespace A320VAU.Common {
             fcu = GetComponentInChildren<FCU.FCU>(true);
 
             systemEventBus = GetComponentInChildren<SystemEventBus>(true);
+
+            elevatorTrim = GetComponentInChildren<DFUNC_a320_ElevatorTrim>(true);
 
             // Worlds
             navaidDatabase = GetNavaidDatabase();

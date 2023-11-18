@@ -12,13 +12,12 @@ namespace A320VAU.Systems.FlyByWire {
     public class RollLaw : UdonSharpBehaviour {
         private DependenciesInjector _injector;
         private SaccAirVehicle _saccAirVehicle;
-        private SaccEntity _saccEntity;
 
-        private Rigidbody _rigidbody;
+        private ADIRU.ADIRU _adiru;
 
-        public float Kp = 0.05f;
-        public float Ki = 0.01f;
-        public float Kd = 0.05f;
+        public float Kp = 0.1f;
+        public float Ki = 0f;
+        public float Kd = 0f;
 
         public float targetRollRate = 0f;
 
@@ -33,13 +32,13 @@ namespace A320VAU.Systems.FlyByWire {
         private void Start() {
             _injector = DependenciesInjector.GetInstance(this);
             _saccAirVehicle = _injector.saccAirVehicle;
-            _saccEntity = _injector.saccEntity;
-
-            _rigidbody = _saccEntity.GetComponent<Rigidbody>();
+            _adiru = _injector.adiru;
         }
 
         private void LateUpdate() {
             var time = Time.time;
+            var bank = _adiru.irs.bank;
+            var rollRate = (bank - _previousRollAngle) / (time - _previousTime);
 
             var Ai = Input.GetKey(KeyCode.A) ? -1 : 0;
             var Di = Input.GetKey(KeyCode.D) ? 1 : 0;
@@ -52,13 +51,25 @@ namespace A320VAU.Systems.FlyByWire {
             }
 
             targetRollRate = (Ai + Di) * 15f;
-            // var rollRate = (_rigidbody.angularVelocity.z - _previousRollAngle) / (time - _previousTime);
-            var localRotation = _saccEntity.transform.localRotation;
-            var rollRate = (localRotation.z - _previousRollAngle) / (time - _previousTime);
 
-            // _saccAirVehicle.JoystickOverride.z = Mathf.Clamp((Ai + Di) * -1, -1, 1);
-            _saccAirVehicle.JoystickOverride.y = Mathf.Clamp(Qi + Ei, -1, 1);
+            // Limit
+            var maxRollLimit = 67f;
+            var normalRollLimit = 33f;
 
+            if (Mathf.Approximately(targetRollRate, 0f) && Mathf.Abs(bank) > normalRollLimit) {
+                var normalRollLimitError = bank >= 0f ? normalRollLimit - bank : -normalRollLimit - bank;
+                targetRollRate += normalRollLimitError * 5f;
+            }
+
+            if (Mathf.Abs(bank) > maxRollLimit) {
+                var maxRollLimitError = bank >= 0f ? maxRollLimit - bank : -maxRollLimit - bank;
+                targetRollRate += maxRollLimitError * 5f;
+            }
+
+            // Roll Rate Limit
+            targetRollRate = Mathf.Clamp(targetRollRate, -15f, 15f);
+
+            // PID
             var error = rollRate - targetRollRate;
             _integral += error * Time.deltaTime;
             var derivative = (error - _previousError) / Time.deltaTime;
@@ -66,10 +77,12 @@ namespace A320VAU.Systems.FlyByWire {
 
             _previousError = error;
             _previousTime = time;
-            // _previousRollAngle = _rigidbody.transform.localRotation.z;
-            _previousRollAngle = localRotation.z;
+            _previousRollAngle = bank;
 
             _saccAirVehicle.JoystickOverride.z = Mathf.Clamp(rollInput, -1f, 1f);
+
+            // Rudder
+            _saccAirVehicle.JoystickOverride.y = Mathf.Clamp(Qi + Ei, -1, 1);
         }
     }
 }

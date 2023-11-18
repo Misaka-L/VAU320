@@ -194,6 +194,12 @@
       "dependencies": {},
       "hash": "095c6be506dfaefe5f99dff6c12ff63d5a1c8149"
     },
+    "com.vrcau.flatradar": {
+      "version": "file:com.vrcau.flatradar",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.vrcau.virtual-bridge-udon": {
       "version": "file:com.vrcau.virtual-bridge-udon",
       "depth": 0,
@@ -210,15 +216,6 @@
         "com.unity.nuget.newtonsoft-json": "3.0.2"
       }
     },
-    "com.vrchat.clientsim": {
-      "version": "file:com.vrchat.clientsim",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.xr.oculus.standalone": "2.38.4",
-        "com.unity.inputsystem": "1.2.0"
-      }
-    },
     "com.vrchat.core.vpm-resolver": {
       "version": "file:com.vrchat.core.vpm-resolver",
       "depth": 0,
@@ -227,12 +224,6 @@
         "com.unity.nuget.newtonsoft-json": "3.0.2"
       }
     },
-    "com.vrchat.udonsharp": {
-      "version": "file:com.vrchat.udonsharp",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {}
-    },
     "com.vrchat.worlds": {
       "version": "file:com.vrchat.worlds",
       "depth": 0,
@@ -240,7 +231,9 @@
       "dependencies": {
         "com.unity.cinemachine": "2.8.0",
         "com.unity.postprocessing": "3.1.1",
-        "com.unity.textmeshpro": "2.1.6"
+        "com.unity.textmeshpro": "2.1.6",
+        "com.unity.xr.oculus.standalone": "2.38.4",
+        "com.unity.inputsystem": "1.2.0"
       }
     },
     "com.yuxiaviation.vau320neo": {
