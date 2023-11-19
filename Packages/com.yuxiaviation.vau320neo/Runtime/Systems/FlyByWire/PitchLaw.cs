@@ -51,6 +51,12 @@ namespace A320VAU.Systems.FlyByWire {
 
             var gLoad = _saccAirVehicle.VertGs;
 
+            // High Speed Protection
+            var overSpeedError = _adiru.adr.instrumentAirSpeed - 350;
+            if (overSpeedError > 0f) {
+                targetGLoad += 0.1f * overSpeedError;
+            }
+
             // Pitch Limit
             var pitchUpLimit = GetPitchUpLimit();
             var pitchDownLimit = -15f;
