@@ -1,6 +1,4 @@
-﻿using System;
-using A320VAU.Common;
-using A320VAU.DFUNC;
+﻿using A320VAU.Common;
 using Avionics.Systems.Common;
 using EsnyaSFAddons.DFUNC;
 using SaccFlightAndVehicles;
@@ -10,6 +8,8 @@ using UnityEngine;
 namespace A320VAU.Systems.FlyByWire {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class PitchLaw : UdonSharpBehaviour {
+        public InputHandler inputHandler;
+
         private DependenciesInjector _injector;
         private SaccAirVehicle _saccAirVehicle;
 
@@ -29,9 +29,6 @@ namespace A320VAU.Systems.FlyByWire {
 
         public bool directLaw;
 
-        private float _autoTrimIntegral;
-        private float _autoTrimPreviousError;
-
         public int VSWCONF0 = 145;
         public int VSWCONF1 = 113;
         public int VSWCONF2 = 107;
@@ -48,20 +45,12 @@ namespace A320VAU.Systems.FlyByWire {
         }
 
         private void LateUpdate() {
-            var Wi = Input.GetKey(KeyCode.W) ? 1 : 0; //inputs as ints
-            var Si = Input.GetKey(KeyCode.S) ? -1 : 0;
-
-            targetGLoad = 1f - Mathf.Clamp(Wi + Si, -1, 1) * 1.5f;
-            // if ((RotationInputs.x < 0 && VertGs > 0) || (RotationInputs.x > 0 && VertGs < 0)) {
-            //     RotationInputs.x *= Limits;
-            // }
-
-            _saccAirVehicle._JoystickOverridden = true;
-
             if (_aircraftSystemData.isAircraftGrounded || directLaw) {
-                _saccAirVehicle.JoystickOverride.x = Mathf.Clamp(Wi + Si, -1, 1);
+                _saccAirVehicle.JoystickOverride.x = inputHandler.pitchInput;
                 return;
             }
+
+            targetGLoad = 1f - inputHandler.pitchInput * 1.5f;
 
             var gLoad = _saccAirVehicle.VertGs;
 

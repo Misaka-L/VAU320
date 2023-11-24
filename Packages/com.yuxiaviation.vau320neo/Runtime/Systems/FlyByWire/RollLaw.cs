@@ -1,15 +1,13 @@
-﻿
-using System;
-using A320VAU.Common;
+﻿using A320VAU.Common;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
-using VRC.Udon;
 
 namespace A320VAU.Systems.FlyByWire {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class RollLaw : UdonSharpBehaviour {
+        public InputHandler inputHandler;
+
         private DependenciesInjector _injector;
         private SaccAirVehicle _saccAirVehicle;
 
@@ -37,20 +35,16 @@ namespace A320VAU.Systems.FlyByWire {
 
         private void LateUpdate() {
             var time = Time.time;
+
             var bank = _adiru.irs.bank;
             var rollRate = (bank - _previousRollAngle) / (time - _previousTime);
 
-            var Ai = Input.GetKey(KeyCode.A) ? -1 : 0;
-            var Di = Input.GetKey(KeyCode.D) ? 1 : 0;
-            var Qi = Input.GetKey(KeyCode.Q) ? -1 : 0;
-            var Ei = Input.GetKey(KeyCode.E) ? 1 : 0;
-
             if (directLaw) {
-                _saccAirVehicle.JoystickOverride.z = Ai + Di;
+                _saccAirVehicle.JoystickOverride.z = inputHandler.rollInput;
                 return;
             }
 
-            targetRollRate = (Ai + Di) * 15f;
+            targetRollRate = inputHandler.rollInput * 15f;
 
             // Limit
             var maxRollLimit = 67f;
@@ -82,7 +76,7 @@ namespace A320VAU.Systems.FlyByWire {
             _saccAirVehicle.JoystickOverride.z = Mathf.Clamp(rollInput, -1f, 1f);
 
             // Rudder
-            _saccAirVehicle.JoystickOverride.y = Mathf.Clamp(Qi + Ei, -1, 1);
+            _saccAirVehicle.JoystickOverride.y = Mathf.Clamp(inputHandler.yawInput, -1, 1);
         }
     }
 }
