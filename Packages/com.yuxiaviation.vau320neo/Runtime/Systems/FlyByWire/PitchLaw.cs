@@ -27,16 +27,10 @@ namespace A320VAU.Systems.FlyByWire {
         public float Ki = 0.00325f;
         public float Kd = 1.2f;
 
-        public float autoTrimKp = 0.5f;
-        public float autoTrimKi = 0f;
-        public float autoTrimKd = 0f;
-
         public bool directLaw;
 
         private float _autoTrimIntegral;
         private float _autoTrimPreviousError;
-
-        private float _previousPitch;
 
         public int VSWCONF0 = 145;
         public int VSWCONF1 = 113;
@@ -107,30 +101,9 @@ namespace A320VAU.Systems.FlyByWire {
 
             pitchInput = Mathf.Clamp(pitchInput, -1f, 1f);
 
-            if (!_aircraftSystemData.isAircraftGrounded && Mathf.Abs(targetGLoad - 1f) < 0.01f && gLoad > 0.5f) {
-                UpdateAutoTrim();
-            }
-            else {
-                _autoTrimPreviousError = 0f;
-                _autoTrimIntegral = 0f;
-            }
-
             _previousError = error;
-            _previousPitch = _adiru.irs.pitch;
 
             _saccAirVehicle.JoystickOverride.x = pitchInput;
-        }
-
-        private void UpdateAutoTrim() {
-            var error = (_adiru.irs.pitch - _previousPitch) / Time.deltaTime;
-            _autoTrimIntegral += error * Time.deltaTime;
-            var derivative = (error - _autoTrimPreviousError) / Time.deltaTime;
-            var trim = autoTrimKp * error + autoTrimKi * _integral + autoTrimKd * derivative;
-
-            _autoTrimIntegral += error * Time.deltaTime;
-            _autoTrimPreviousError = error;
-
-            _elevatorTrim.trim = trim;
         }
 
         private float GetPitchUpLimit() {
