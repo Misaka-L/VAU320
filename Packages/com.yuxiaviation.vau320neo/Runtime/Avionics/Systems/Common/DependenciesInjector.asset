@@ -1463,7 +1463,7 @@ MonoBehaviour:
       Data: 80|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: A320VAU.DFUNC.DFUNC_a320_ElevatorTrim, com.yuxiaviation.vau320neo
+      Data: EsnyaSFAddons.DFUNC.DFUNC_ElevatorTrim, EsnyaSFAddons.Runtime
     - Name: 
       Entry: 8
       Data: 

@@ -1,6 +1,8 @@
-﻿using A320VAU.Common;
+﻿using System;
+using A320VAU.Common;
 using A320VAU.DFUNC;
 using Avionics.Systems.Common;
+using EsnyaSFAddons.DFUNC;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
@@ -11,8 +13,9 @@ namespace A320VAU.Systems.FlyByWire {
         private DependenciesInjector _injector;
         private SaccAirVehicle _saccAirVehicle;
 
-        private DFUNC_a320_ElevatorTrim _elevatorTrim;
+        private DFUNC_ElevatorTrim _elevatorTrim;
         private AircraftSystemData _aircraftSystemData;
+        private RadioAltimeter.RadioAltimeter _radioAltimeter;
         private ADIRU.ADIRU _adiru;
 
         public float targetGLoad = 1f;
@@ -23,6 +26,17 @@ namespace A320VAU.Systems.FlyByWire {
         public float Kp = 1.5f;
         public float Ki = 0.00325f;
         public float Kd = 1.2f;
+
+        public float autoTrimKp = 0.5f;
+        public float autoTrimKi = 0f;
+        public float autoTrimKd = 0f;
+
+        public bool directLaw;
+
+        private float _autoTrimIntegral;
+        private float _autoTrimPreviousError;
+
+        private float _previousPitch;
 
         public int VSWCONF0 = 145;
         public int VSWCONF1 = 113;
@@ -36,6 +50,7 @@ namespace A320VAU.Systems.FlyByWire {
             _elevatorTrim = _injector.elevatorTrim;
             _aircraftSystemData = _injector.equipmentData;
             _adiru = _injector.adiru;
+            _radioAltimeter = _injector.radioAltimeter;
         }
 
         private void LateUpdate() {
@@ -48,6 +63,11 @@ namespace A320VAU.Systems.FlyByWire {
             // }
 
             _saccAirVehicle._JoystickOverridden = true;
+
+            if (_aircraftSystemData.isAircraftGrounded || directLaw) {
+                _saccAirVehicle.JoystickOverride.x = Mathf.Clamp(Wi + Si, -1, 1);
+                return;
+            }
 
             var gLoad = _saccAirVehicle.VertGs;
 
@@ -85,9 +105,32 @@ namespace A320VAU.Systems.FlyByWire {
             var derivative = (error - _previousError) / Time.deltaTime;
             var pitchInput = Kp * error + Ki * _integral + Kd * derivative;
 
-            _previousError = error;
+            pitchInput = Mathf.Clamp(pitchInput, -1f, 1f);
 
-            _saccAirVehicle.JoystickOverride.x = Mathf.Clamp(pitchInput, -1f, 1f);
+            if (!_aircraftSystemData.isAircraftGrounded && Mathf.Abs(targetGLoad - 1f) < 0.01f && gLoad > 0.5f) {
+                UpdateAutoTrim();
+            }
+            else {
+                _autoTrimPreviousError = 0f;
+                _autoTrimIntegral = 0f;
+            }
+
+            _previousError = error;
+            _previousPitch = _adiru.irs.pitch;
+
+            _saccAirVehicle.JoystickOverride.x = pitchInput;
+        }
+
+        private void UpdateAutoTrim() {
+            var error = (_adiru.irs.pitch - _previousPitch) / Time.deltaTime;
+            _autoTrimIntegral += error * Time.deltaTime;
+            var derivative = (error - _autoTrimPreviousError) / Time.deltaTime;
+            var trim = autoTrimKp * error + autoTrimKi * _integral + autoTrimKd * derivative;
+
+            _autoTrimIntegral += error * Time.deltaTime;
+            _autoTrimPreviousError = error;
+
+            _elevatorTrim.trim = trim;
         }
 
         private float GetPitchUpLimit() {
